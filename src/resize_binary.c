@@ -38,7 +38,7 @@ char *create_output_filename(const char *input_filename) {
 	return output_filename;
 }
 
-int process_file(FILE *input_file, FILE *output_file, long specified_size) {
+int cut_file(FILE *input_file, FILE *output_file, long specified_size) {
 	unsigned char *buf = (unsigned char *)malloc(CHUNK_SIZE);
 	if (buf == NULL) {
 		printf("Error: Memory allocation failed for buffer.\n");
@@ -49,7 +49,7 @@ int process_file(FILE *input_file, FILE *output_file, long specified_size) {
 	size_t total_bytes_read = 0;
 
 	while (total_bytes_read < specified_size && (bytes_read = fread(buf, 1, CHUNK_SIZE, input_file)) > 0) {
-		// Adjust the read size if it exceeds the specified size
+		// Adjust the read size
 		if (total_bytes_read + bytes_read > specified_size) {
 			bytes_read = specified_size - total_bytes_read;
 		}
@@ -60,6 +60,41 @@ int process_file(FILE *input_file, FILE *output_file, long specified_size) {
 
 	free(buf);
 	return total_bytes_read == specified_size;
+}
+
+int expand_file(FILE *input_file, FILE *output_file, long specified_size) {
+	unsigned char *buf = (unsigned char *)malloc(CHUNK_SIZE);
+	if (buf == NULL) {
+		printf("Error: Memory allocation failed for buffer.\n");
+		return 0;
+	}
+
+	size_t bytes_read;
+	size_t total_bytes_write = 0;
+
+	while ((bytes_read = fread(buf, 1, CHUNK_SIZE, input_file)) > 0) {
+		fwrite(buf, 1, bytes_read, output_file);
+		total_bytes_write += bytes_read;
+	}
+
+	//padding
+	while (total_bytes_write < specified_size) {
+		size_t bytes_write;
+
+		// Adjust the write size
+		if (specified_size - total_bytes_write > CHUNK_SIZE) {
+			bytes_write = CHUNK_SIZE;
+		} else {
+			bytes_write = specified_size - total_bytes_write;
+		}
+		
+		memset(buf, 0, bytes_write);
+		fwrite(buf, 1, bytes_write, output_file);
+		total_bytes_write += bytes_write;
+	}
+
+	free(buf);
+	return total_bytes_write == specified_size;
 }
 
 int main(int argc, char *argv[]) {
@@ -109,16 +144,27 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	// Read from input and write to output
-	if (!process_file(input_file, output_file, specified_size)) {
-		printf("Error: Failed to process the input file.\n");
-		fclose(input_file);
-		fclose(output_file);
-		free(output_filename);
-		return 1;
+	if(specified_size <= input_file_size) {
+		// Cut file 
+		if (!cut_file(input_file, output_file, specified_size)) {
+			printf("Error: Failed to process the input file.\n");
+			fclose(input_file);
+			fclose(output_file);
+			free(output_filename);
+			return 1;
+		}
+	} else {
+		// Expand file
+		if (!expand_file(input_file, output_file, specified_size)) {
+			printf("Error: Failed to process the input file.\n");
+			fclose(input_file);
+			fclose(output_file);
+			free(output_filename);
+			return 1;
+		}
 	}
 
-	printf("File read successfully, %zu bytes processed.\n", specified_size);
+	printf("File process successfully, %zu bytes processed.\n", specified_size);
 	printf("Output file '%s' was created.\n", output_filename);
 
 	fclose(input_file);
