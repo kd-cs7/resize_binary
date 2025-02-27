@@ -6,7 +6,7 @@
 
 #define CHUNK_SIZE 16
 
-int cut_file(FILE *input_file, FILE *output_file, long specified_size) {
+int cut_file(FILE *input_file, FILE *output_file, size_t specified_size) {
 	unsigned char *buf = (unsigned char *)malloc(CHUNK_SIZE);
 	if (buf == NULL) {
 		printf("Error: Memory allocation failed for buffer.\n");
@@ -30,7 +30,7 @@ int cut_file(FILE *input_file, FILE *output_file, long specified_size) {
 	return total_bytes_read == specified_size;
 }
 
-int expand_file(FILE *input_file, FILE *output_file, long specified_size) {
+int expand_file(FILE *input_file, FILE *output_file, size_t specified_size) {
 	unsigned char *buf = (unsigned char *)malloc(CHUNK_SIZE);
 	if (buf == NULL) {
 		printf("Error: Memory allocation failed for buffer.\n");

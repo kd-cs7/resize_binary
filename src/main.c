@@ -2,7 +2,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
+#include <stdint.h>
+#include "main.h"
 
 int main(int argc, char *argv[]) {
 	if (argc < 3) {
@@ -19,8 +20,8 @@ int main(int argc, char *argv[]) {
 
 	// Get input file size
 	fseek(input_file, 0, SEEK_END);
-	long input_file_size = ftell(input_file);
-	if (input_file_size > LONG_MAX) {
+	size_t input_file_size = ftell(input_file);
+	if (input_file_size > SIZE_MAX) {
 		printf("Error: Input file size is too large.\n");
 		fclose(input_file);
 		return 1;
@@ -33,7 +34,7 @@ int main(int argc, char *argv[]) {
 		fclose(input_file);
 		return 1;
 	}
-	long specified_size = atol(argv[2]);
+	size_t specified_size = atol(argv[2]);
 
 	// Create output file name
 	char *output_filename = create_output_filename(input_filename);
